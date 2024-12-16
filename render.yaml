@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: youtube-mp3-converter
+    env: python
+    buildCommand: bash .buildsh
+    startCommand: gunicorn wsgi:app --log-file -
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
+      - key: PATH
+        value: /usr/local/bin:/usr/bin:/bin
+    disk:
+      name: tmp
+      mountPath: /tmp
+      sizeGB: 1 

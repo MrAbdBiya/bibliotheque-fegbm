@@ -11,8 +11,13 @@ import time
 from datetime import datetime
 import io
 
-# Définir le chemin absolu du dossier www
+# Définir les chemins absolus
 WWW_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'www')
+TEMP_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tmp')
+
+# S'assurer que les dossiers existent
+os.makedirs(WWW_FOLDER, exist_ok=True)
+os.makedirs(TEMP_FOLDER, exist_ok=True)
 
 app = Flask(__name__, 
             static_url_path='',
@@ -191,8 +196,8 @@ def download_video():
                 'message': 'Démarrage du téléchargement...'
             })
 
-            temp_dir = tempfile.gettempdir()
-            output_template = os.path.join(temp_dir, f'yt_{request_id}_%(title)s.%(ext)s')
+            # Utiliser le dossier temporaire personnalisé
+            output_template = os.path.join(TEMP_FOLDER, f'yt_{request_id}_%(title)s.%(ext)s')
 
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -246,15 +251,15 @@ def download_video():
                         logger.error(f"Erreur lors du téléchargement : {str(e)}")
                         raise Exception(f"Erreur lors du téléchargement : {str(e)}")
 
-                    output_path = os.path.join(temp_dir, f'yt_{request_id}_{title}.mp3')
+                    output_path = os.path.join(TEMP_FOLDER, f'yt_{request_id}_{title}.mp3')
                     logger.info(f"Chemin de sortie attendu : {output_path}")
 
                     if not os.path.exists(output_path):
-                        possible_files = os.listdir(temp_dir)
+                        possible_files = os.listdir(TEMP_FOLDER)
                         logger.info(f"Fichiers dans le dossier temp : {possible_files}")
                         matching_files = [f for f in possible_files if f.startswith(f'yt_{request_id}_') and f.endswith('.mp3')]
                         if matching_files:
-                            output_path = os.path.join(temp_dir, matching_files[0])
+                            output_path = os.path.join(TEMP_FOLDER, matching_files[0])
                             logger.info(f"Fichier trouvé : {output_path}")
                         else:
                             raise Exception("Le fichier MP3 n'a pas été créé")
