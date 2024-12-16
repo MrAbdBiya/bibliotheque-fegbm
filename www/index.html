@@ -2,95 +2,167 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#6c5ce7">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>YouTube MP3 Premium</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de Bibliothèque - FEGBM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-    <div class="app-container">
-        <div class="glass-container">
-            <header class="app-header">
+    <header class="main-header">
+        <div class="header-top">
+            <div class="container">
                 <div class="logo">
-                    <i class="fab fa-youtube"></i>
-                    <span>Premium Converter</span>
-                </div>
-                <div class="header-controls">
-                    <button class="theme-toggle" id="themeToggle">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                </div>
-            </header>
-
-            <main class="converter-section">
-                <h1>Convertisseur YouTube <span class="accent">Premium</span></h1>
-                <p class="subtitle">Transformez vos vidéos YouTube en fichiers MP3 haute qualité</p>
-                
-                <div class="input-section">
-                    <div class="url-input-container">
-                        <i class="fas fa-link input-icon"></i>
-                        <input type="text" id="youtubeUrl" 
-                               placeholder="Collez le lien YouTube ici"
-                               title="Exemple: https://www.youtube.com/watch?v=..."
-                               autocomplete="off"
-                               autocapitalize="off">
-                    </div>
-                    <button id="convertBtn" class="convert-button ripple">
-                        <i class="fas fa-exchange-alt"></i>
-                        <span>Convertir</span>
-                    </button>
-                </div>
-
-                <div class="progress-container" id="progressContainer" style="display: none;">
-                    <div class="progress-info">
-                        <div class="progress-status" id="progressStatus">Préparation...</div>
-                        <div class="progress-details" id="progressDetails"></div>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" id="progressBar">
-                            <div class="progress" id="progress"></div>
-                        </div>
-                        <div class="progress-text" id="progressText">0%</div>
+                    <img src="static/images/logo.png" alt="FEGBM Logo">
+                    <div class="logo-text">
+                        <h1>FEGBM</h1>
+                        <p>Faculté d'Économie et de Gestion</p>
                     </div>
                 </div>
-
-                <div id="status" class="status"></div>
-                <div class="loader" id="loader"></div>
-            </main>
-
-            <footer class="app-footer">
-                <div class="features">
-                    <div class="feature ripple">
-                        <i class="fas fa-bolt"></i>
-                        <span>Conversion Rapide</span>
-                    </div>
-                    <div class="feature ripple">
-                        <i class="fas fa-music"></i>
-                        <span>Haute Qualité Audio</span>
-                    </div>
-                    <div class="feature ripple">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>100% Sécurisé</span>
-                    </div>
+                <div class="header-actions">
+                    <a href="#" class="btn-login">
+                        <i class="fas fa-user"></i>
+                        Connexion
+                    </a>
+                    <select class="language-select">
+                        <option value="fr">Français</option>
+                        <option value="ar">العربية</option>
+                        <option value="en">English</option>
+                    </select>
                 </div>
-
-                <div class="instructions">
-                    <h3><i class="fas fa-info-circle"></i> Comment utiliser</h3>
-                    <ol>
-                        <li><i class="fas fa-copy"></i> Copiez l'URL d'une vidéo YouTube</li>
-                        <li><i class="fas fa-paste"></i> Collez-la dans le champ ci-dessus</li>
-                        <li><i class="fas fa-mouse-pointer"></i> Cliquez sur "Convertir"</li>
-                        <li><i class="fas fa-download"></i> Téléchargez votre fichier MP3</li>
-                    </ol>
-                </div>
-            </footer>
+            </div>
         </div>
-    </div>
+        <nav class="main-nav">
+            <div class="container">
+                <ul>
+                    <li><a href="#" class="active">Accueil</a></li>
+                    <li><a href="#">Catalogue</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Ressources</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
 
-    <script src="script.js"></script>
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="search-box">
+                    <h2>Rechercher dans le catalogue</h2>
+                    <div class="search-form">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Rechercher par titre, auteur, ISBN...">
+                        </div>
+                        <div class="search-filters">
+                            <select>
+                                <option value="all">Tous les documents</option>
+                                <option value="books">Livres</option>
+                                <option value="articles">Articles</option>
+                                <option value="theses">Thèses</option>
+                            </select>
+                            <button class="btn-search">Rechercher</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="quick-access">
+            <div class="container">
+                <h2>Accès rapide</h2>
+                <div class="quick-access-grid">
+                    <div class="quick-access-card">
+                        <i class="fas fa-book"></i>
+                        <h3>Catalogue</h3>
+                        <p>Consultez notre catalogue en ligne</p>
+                    </div>
+                    <div class="quick-access-card">
+                        <i class="fas fa-user-graduate"></i>
+                        <h3>Espace étudiant</h3>
+                        <p>Accédez à votre espace personnel</p>
+                    </div>
+                    <div class="quick-access-card">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h3>Réservations</h3>
+                        <p>Gérez vos réservations</p>
+                    </div>
+                    <div class="quick-access-card">
+                        <i class="fas fa-newspaper"></i>
+                        <h3>Actualités</h3>
+                        <p>Dernières nouvelles de la bibliothèque</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="news-section">
+            <div class="container">
+                <h2>Actualités et événements</h2>
+                <div class="news-grid">
+                    <article class="news-card">
+                        <div class="news-image">
+                            <img src="static/images/news1.jpg" alt="Actualité 1">
+                        </div>
+                        <div class="news-content">
+                            <h3>Nouveaux ouvrages disponibles</h3>
+                            <p>Découvrez notre nouvelle collection d'ouvrages en économie et gestion.</p>
+                            <a href="#" class="read-more">Lire la suite</a>
+                        </div>
+                    </article>
+                    <article class="news-card">
+                        <div class="news-image">
+                            <img src="static/images/news2.jpg" alt="Actualité 2">
+                        </div>
+                        <div class="news-content">
+                            <h3>Formation en recherche documentaire</h3>
+                            <p>Participez à nos sessions de formation pour mieux utiliser les ressources.</p>
+                            <a href="#" class="read-more">Lire la suite</a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> Adresse de la faculté</p>
+                    <p><i class="fas fa-phone"></i> +212 5XX XX XX XX</p>
+                    <p><i class="fas fa-envelope"></i> contact@fegbm.ma</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Liens utiles</h3>
+                    <ul>
+                        <li><a href="#">Guide de l'utilisateur</a></li>
+                        <li><a href="#">Règlement intérieur</a></li>
+                        <li><a href="#">Plan du site</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Horaires d'ouverture</h3>
+                    <p>Lundi - Vendredi : 8h30 - 18h00</p>
+                    <p>Samedi : 9h00 - 13h00</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Suivez-nous</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 FEGBM. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="static/script.js"></script>
 </body>
 </html> 
