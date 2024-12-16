@@ -200,7 +200,7 @@ def download_video():
             output_template = os.path.join(TEMP_FOLDER, f'yt_{request_id}_%(title)s.%(ext)s')
 
             ydl_opts = {
-                'format': 'bestaudio/best',
+                'format': 'bestaudio',
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
@@ -208,19 +208,15 @@ def download_video():
                 }],
                 'outtmpl': output_template,
                 'quiet': False,
-                'no_warnings': True,
+                'no_warnings': False,  # Activer les avertissements pour le débogage
                 'progress_hooks': [progress_hook],
-                'no_check_certificates': True,
-                'ignoreerrors': True,
+                'verbose': True,
+                'no_color': True,
+                'geo_bypass': True,
                 'nocheckcertificate': True,
-                'extract_flat': True,
+                'ignoreerrors': False,  # Ne pas ignorer les erreurs pour voir ce qui se passe
+                'extract_flat': False,
                 'youtube_include_dash_manifest': False,
-                'extractor_args': {
-                    'youtube': {
-                        'skip': ['dash', 'hls'],
-                        'player_skip': ['js', 'configs', 'webpage'],
-                    }
-                },
                 'http_headers': {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -229,58 +225,58 @@ def download_video():
                 },
                 'socket_timeout': 30,
                 'retries': 3,
-                'verbose': True,
             }
 
             logger.info(f"Début du téléchargement avec yt-dlp pour {request_id}")
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    # Extraire les informations d'abord
-                    logger.info("Extraction des informations de la vidéo...")
                     try:
-                        # Essayer d'abord avec extract_info
-                        info = ydl.extract_info(url, download=False)
-                        if info is None:
-                            # Si ça échoue, essayer avec une autre méthode
-                            logger.info("Tentative avec une autre méthode d'extraction...")
-                            ydl_opts['extract_flat'] = False
-                            ydl_opts['format'] = 'bestaudio'
-                            with yt_dlp.YoutubeDL(ydl_opts) as ydl2:
-                                info = ydl2.extract_info(url, download=False)
-                                if info is None:
-                                    raise Exception("Impossible d'extraire les informations de la vidéo")
+                        # Tenter d'extraire les informations
+                        logger.info("Tentative d'extraction des informations...")
+                        info_dict = ydl.extract_info(url, download=False)
                         
-                        logger.info(f"Informations extraites : {json.dumps(info, indent=2)}")
-                    except Exception as e:
-                        logger.error(f"Erreur lors de l'extraction des informations : {str(e)}")
-                        raise Exception(f"Erreur lors de l'extraction des informations : {str(e)}")
-
-                    title = info.get('title', 'video')
-                    logger.info(f"Titre de la vidéo : {title}")
-
-                    # Télécharger la vidéo avec les options de base
-                    logger.info("Début du téléchargement...")
-                    try:
-                        ydl_opts['extract_flat'] = False
-                        ydl_opts['format'] = 'bestaudio'
-                        with yt_dlp.YoutubeDL(ydl_opts) as ydl3:
-                            ydl3.download([url])
-                    except Exception as e:
-                        logger.error(f"Erreur lors du téléchargement : {str(e)}")
+                        if not info_dict:
+                            raise Exception("Aucune information extraite")
+                            
+                        video_id = info_dict.get('id', 'unknown')
+                        title = info_dict.get('title', 'video')
+                        duration = info_dict.get('duration', 0)
+                        
+                        logger.info(f"ID de la vidéo : {video_id}")
+                        logger.info(f"Titre : {title}")
+                        logger.info(f"Durée : {duration} secondes")
+                        
+                        # Vérifier si la vidéo est trop longue (plus de 30 minutes)
+                        if duration > 1800:
+                            raise Exception("La vidéo est trop longue (maximum 30 minutes)")
+                            
+                        # Vérifier si la vidéo est disponible
+                        if info_dict.get('is_live'):
+                            raise Exception("Les lives ne sont pas supportés")
+                            
+                        # Télécharger la vidéo
+                        logger.info("Début du téléchargement...")
+                        ydl.download([url])
+                        
+                        output_path = os.path.join(TEMP_FOLDER, f'yt_{request_id}_{title}.mp3')
+                        logger.info(f"Chemin de sortie attendu : {output_path}")
+                        
+                        if not os.path.exists(output_path):
+                            possible_files = os.listdir(TEMP_FOLDER)
+                            logger.info(f"Fichiers dans le dossier temp : {possible_files}")
+                            matching_files = [f for f in possible_files if f.startswith(f'yt_{request_id}_') and f.endswith('.mp3')]
+                            if matching_files:
+                                output_path = os.path.join(TEMP_FOLDER, matching_files[0])
+                                logger.info(f"Fichier trouvé : {output_path}")
+                            else:
+                                raise Exception("Le fichier MP3 n'a pas été créé")
+                                
+                    except yt_dlp.utils.DownloadError as e:
+                        logger.error(f"Erreur yt-dlp : {str(e)}")
                         raise Exception(f"Erreur lors du téléchargement : {str(e)}")
-
-                    output_path = os.path.join(TEMP_FOLDER, f'yt_{request_id}_{title}.mp3')
-                    logger.info(f"Chemin de sortie attendu : {output_path}")
-
-                    if not os.path.exists(output_path):
-                        possible_files = os.listdir(TEMP_FOLDER)
-                        logger.info(f"Fichiers dans le dossier temp : {possible_files}")
-                        matching_files = [f for f in possible_files if f.startswith(f'yt_{request_id}_') and f.endswith('.mp3')]
-                        if matching_files:
-                            output_path = os.path.join(TEMP_FOLDER, matching_files[0])
-                            logger.info(f"Fichier trouvé : {output_path}")
-                        else:
-                            raise Exception("Le fichier MP3 n'a pas été créé")
+                    except Exception as e:
+                        logger.error(f"Erreur inattendue : {str(e)}")
+                        raise
 
                     # Informer que le traitement est terminé
                     send_progress_update(request_id, {
