@@ -11,10 +11,12 @@ import time
 from datetime import datetime
 import io
 
+# Définir le chemin absolu du dossier www
+WWW_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'www')
+
 app = Flask(__name__, 
             static_url_path='',
-            static_folder='www',
-            template_folder='www')
+            static_folder=WWW_FOLDER)
 
 CORS(app, resources={
     r"/*": {
@@ -95,10 +97,21 @@ def progress_hook(d):
 def home():
     logger.info("Accès à la page d'accueil")
     try:
+        logger.info(f"Dossier statique : {app.static_folder}")
+        logger.info(f"Contenu du dossier www : {os.listdir(WWW_FOLDER)}")
         return app.send_static_file('index.html')
     except Exception as e:
         logger.error(f"Erreur lors de l'envoi de index.html: {e}")
-        return "Erreur lors du chargement de la page", 500
+        return str(e), 500
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    logger.info(f"Demande de fichier statique : {filename}")
+    try:
+        return send_from_directory(os.path.join(WWW_FOLDER, 'static'), filename)
+    except Exception as e:
+        logger.error(f"Erreur lors de l'envoi du fichier statique {filename}: {e}")
+        return str(e), 404
 
 @app.route('/progress/<request_id>')
 def get_progress(request_id):

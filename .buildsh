@@ -3,9 +3,18 @@
 # Installer les dépendances Python
 pip install -r requirements.txt
 
-# Créer le dossier www s'il n'existe pas
+# Installer FFmpeg
+apt-get update && apt-get install -y ffmpeg
+
+# Créer le dossier www et ses sous-dossiers
 mkdir -p www/static
 
 # Copier les fichiers statiques
 cp -r static/* www/static/
-cp static/index.html www/ 
+cp static/index.html www/
+
+# Afficher la structure des dossiers pour le débogage
+echo "Contenu du dossier www :"
+ls -la www/
+echo "Contenu du dossier www/static :"
+ls -la www/static/
