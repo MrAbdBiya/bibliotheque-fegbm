@@ -1,0 +1,17 @@
+{
+  "name": "youtube-mp3-converter",
+  "version": "1.0.0",
+  "description": "YouTube to MP3 Converter App",
+  "main": "index.js",
+  "scripts": {
+    "start": "python app.py",
+    "build": "npm run build:web && npm run build:android",
+    "build:web": "mkdir www 2>nul & xcopy /E /I /Y static www\\ & copy /Y static\\index.html www\\",
+    "build:android": "npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^5.5.0",
+    "@capacitor/core": "^5.5.0",
+    "@capacitor/cli": "^5.5.0"
+  }
+} 

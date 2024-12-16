@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6c5ce7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>YouTube MP3 Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="glass-container">
+            <header class="app-header">
+                <div class="logo">
+                    <i class="fab fa-youtube"></i>
+                    <span>Premium Converter</span>
+                </div>
+                <div class="header-controls">
+                    <button class="theme-toggle" id="themeToggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <main class="converter-section">
+                <h1>Convertisseur YouTube <span class="accent">Premium</span></h1>
+                <p class="subtitle">Transformez vos vidéos YouTube en fichiers MP3 haute qualité</p>
+                
+                <div class="input-section">
+                    <div class="url-input-container">
+                        <i class="fas fa-link input-icon"></i>
+                        <input type="text" id="youtubeUrl" 
+                               placeholder="Collez le lien YouTube ici"
+                               title="Exemple: https://www.youtube.com/watch?v=..."
+                               autocomplete="off"
+                               autocapitalize="off">
+                    </div>
+                    <button id="convertBtn" class="convert-button ripple">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>Convertir</span>
+                    </button>
+                </div>
+
+                <div class="progress-container" id="progressContainer" style="display: none;">
+                    <div class="progress-info">
+                        <div class="progress-status" id="progressStatus">Préparation...</div>
+                        <div class="progress-details" id="progressDetails"></div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar">
+                            <div class="progress" id="progress"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+                </div>
+
+                <div id="status" class="status"></div>
+                <div class="loader" id="loader"></div>
+            </main>
+
+            <footer class="app-footer">
+                <div class="features">
+                    <div class="feature ripple">
+                        <i class="fas fa-bolt"></i>
+                        <span>Conversion Rapide</span>
+                    </div>
+                    <div class="feature ripple">
+                        <i class="fas fa-music"></i>
+                        <span>Haute Qualité Audio</span>
+                    </div>
+                    <div class="feature ripple">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>100% Sécurisé</span>
+                    </div>
+                </div>
+
+                <div class="instructions">
+                    <h3><i class="fas fa-info-circle"></i> Comment utiliser</h3>
+                    <ol>
+                        <li><i class="fas fa-copy"></i> Copiez l'URL d'une vidéo YouTube</li>
+                        <li><i class="fas fa-paste"></i> Collez-la dans le champ ci-dessus</li>
+                        <li><i class="fas fa-mouse-pointer"></i> Cliquez sur "Convertir"</li>
+                        <li><i class="fas fa-download"></i> Téléchargez votre fichier MP3</li>
+                    </ol>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
