@@ -1,334 +1,146 @@
-// Configuration de l'API
-const API_BASE_URL = 'https://youtube-mp3-converter-b3jh.onrender.com'; // URL du serveur Render
+document.addEventListener('DOMContentLoaded', () => {
+    // Éléments DOM
+    const searchInput = document.querySelector('.search-input input');
+    const searchSelect = document.querySelector('.search-filters select');
+    const searchButton = document.querySelector('.btn-search');
+    const languageSelect = document.querySelector('.language-select');
 
-// Fonction pour vérifier la connexion au serveur
-async function checkServerConnection() {
-    try {
-        console.log('Vérification de la connexion au serveur...');
-        const response = await fetch(`${API_BASE_URL}/health`);
-        if (!response.ok) {
-            console.error('Erreur de connexion au serveur:', response.status, response.statusText);
-            throw new Error('Serveur non disponible');
-        }
-        console.log('Connexion au serveur établie avec succès');
-        return true;
-    } catch (error) {
-        console.error('Erreur de connexion au serveur:', error);
-        return false;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-    const urlInput = document.getElementById('youtubeUrl');
-    const convertBtn = document.getElementById('convertBtn');
-    const status = document.getElementById('status');
-    const loader = document.getElementById('loader');
-    const progressContainer = document.getElementById('progressContainer');
-    const progress = document.getElementById('progress');
-    const progressText = document.getElementById('progressText');
-    const progressStatus = document.getElementById('progressStatus');
-    const progressDetails = document.getElementById('progressDetails');
-
-    // Vérifier la connexion au démarrage
-    const isConnected = await checkServerConnection();
-    if (!isConnected) {
-        showError('Le service est temporairement indisponible. Veuillez réessayer plus tard.');
-        return;
-    }
-
-    let eventSource = null;
-    let lastProgressUpdate = null;
-    let isDownloading = false;
-
-    function formatSize(bytes) {
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        if (bytes === 0) return '0 B';
-        const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-        return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
-    }
-
-    function formatSpeed(speedBytesPerSec) {
-        if (!speedBytesPerSec) return '0 MB/s';
-        const mbps = speedBytesPerSec / 1024 / 1024;
-        return `${mbps.toFixed(1)} MB/s`;
-    }
-
-    function formatTime(seconds) {
-        if (seconds < 60) return `${Math.round(seconds)}s`;
-        return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
-    }
-
-    function updateProgressUI(percentage, message, data = {}) {
-        if (!isDownloading && percentage > 0) {
-            isDownloading = true;
-            progressContainer.style.display = 'block';
-        }
-
-        progress.style.width = `${percentage}%`;
-        progressText.textContent = `${Math.round(percentage)}%`;
-
-        if (message) {
-            progressStatus.textContent = message;
-        }
-
-        if (data.speed > 0) {
-            const speedFormatted = formatSpeed(data.speed);
-            const downloaded = formatSize(data.downloaded || 0);
-            const total = formatSize(data.total || 0);
-            const remainingBytes = data.total - data.downloaded;
-            const remainingTime = remainingBytes / data.speed;
-
-            progressDetails.textContent =
-                `${downloaded} / ${total} - ` +
-                `Vitesse : ${speedFormatted} - ` +
-                `Temps restant : ${formatTime(remainingTime)}`;
-        }
-
-        lastProgressUpdate = Date.now();
-    }
-
-    function showError(message) {
-        status.textContent = message;
-        status.className = 'status error';
-    }
-
-    function showSuccess(message) {
-        status.textContent = message;
-        status.className = 'status success';
-    }
-
-    function resetProgress() {
-        if (eventSource) {
-            eventSource.close();
-            eventSource = null;
-        }
-        progress.style.width = '0%';
-        progressText.textContent = '0%';
-        progressContainer.style.display = 'none';
-        progressStatus.textContent = '';
-        progressDetails.textContent = '';
-        status.textContent = '';
-        status.className = 'status';
-        lastProgressUpdate = null;
-        isDownloading = false;
-    }
-
-    function validateYouTubeUrl(url) {
-        const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
-        return regex.test(url);
-    }
-
-    function setupEventSource(requestId) {
-        return new Promise((resolve, reject) => {
-            eventSource = new EventSource(`/progress/${requestId}`);
-            let downloadStarted = false;
-
-            function checkProgress() {
-                if (lastProgressUpdate && Date.now() - lastProgressUpdate > 30000) {
-                    console.warn('Pas de mise à jour depuis 30 secondes');
-                    eventSource.close();
-                    reject(new Error('Le téléchargement semble bloqué. Veuillez réessayer.'));
-                }
-            }
-
-            const progressChecker = setInterval(checkProgress, 5000);
-
-            eventSource.onmessage = (event) => {
-                console.log('Event received:', event.data);
-                const data = JSON.parse(event.data);
-
-                if (data.status === 'connected') {
-                    console.log('Connexion établie');
-                    updateProgressUI(0, 'Connexion établie...');
-                    return;
-                }
-
-                if (data.status === 'heartbeat') {
-                    console.log('Heartbeat reçu');
-                    return;
-                }
-
-                if (data.status === 'starting') {
-                    updateProgressUI(0, data.message || 'Démarrage du téléchargement...');
-                } else if (data.status === 'downloading') {
-                    downloadStarted = true;
-                    updateProgressUI(
-                        data.progress,
-                        'Téléchargement en cours...',
-                        data
-                    );
-                } else if (data.status === 'processing') {
-                    updateProgressUI(95, 'Conversion en MP3...');
-                } else if (data.status === 'finished') {
-                    clearInterval(progressChecker);
-                    updateProgressUI(100, data.message || 'Finalisation...');
-                    resolve();
-                } else if (data.status === 'error') {
-                    clearInterval(progressChecker);
-                    reject(new Error(data.message || 'Erreur pendant le téléchargement'));
-                }
-            };
-
-            eventSource.onerror = (error) => {
-                console.error('SSE Error:', error);
-                clearInterval(progressChecker);
-                if (!downloadStarted) {
-                    reject(new Error('Erreur de connexion au serveur. Veuillez réessayer.'));
-                }
-            };
-
-            setTimeout(() => {
-                if (!downloadStarted && !lastProgressUpdate) {
-                    clearInterval(progressChecker);
-                    reject(new Error('Le téléchargement n\'a pas démarré. Veuillez vérifier l\'URL et réessayer.'));
-                }
-            }, 10000);
-        });
-    }
-
-    async function startDownload(url, requestId) {
-        try {
-            const response = await fetch('/download', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ url, requestId }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Erreur lors de la conversion');
-            }
-
-            const blob = await response.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = 'audio.mp3';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(downloadUrl);
-            document.body.removeChild(a);
-        } catch (error) {
-            console.error('Erreur lors du téléchargement:', error);
-            throw error;
-        }
-    }
-
-    convertBtn.addEventListener('click', async () => {
-        const url = urlInput.value.trim();
+    // Fonction de recherche
+    function performSearch() {
+        const query = searchInput.value.trim();
+        const category = searchSelect.value;
         
-        if (!url) {
-            showError('Veuillez entrer une URL YouTube');
+        if (!query) {
+            showNotification('Veuillez entrer un terme de recherche', 'error');
             return;
         }
 
-        if (!validateYouTubeUrl(url)) {
-            showError('Veuillez entrer une URL YouTube valide');
-            return;
-        }
+        // Simuler une recherche (à remplacer par une vraie API)
+        showNotification('Recherche en cours...', 'info');
+        
+        // Ici, vous pouvez ajouter l'appel à votre API de recherche
+        console.log('Recherche:', { query, category });
+    }
 
-        console.log('Début de la conversion pour:', url);
+    // Gestionnaire d'événements pour le bouton de recherche
+    searchButton.addEventListener('click', performSearch);
 
-        // Vérifier la connexion avant de commencer
-        const isConnected = await checkServerConnection();
-        if (!isConnected) {
-            showError('Le service est temporairement indisponible. Veuillez réessayer plus tard.');
-            return;
-        }
-
-        try {
-            resetProgress();
-            progressStatus.textContent = 'Initialisation...';
-            loader.style.display = 'none';
-            convertBtn.disabled = true;
-            progressContainer.style.display = 'block';
-            
-            const requestId = Date.now().toString();
-            console.log('RequestID généré:', requestId);
-            
-            // Établir la connexion SSE d'abord
-            console.log('Établissement de la connexion SSE...');
-            const progressPromise = setupEventSource(requestId);
-            
-            // Attendre que la connexion SSE soit établie
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Démarrer le téléchargement
-            console.log('Envoi de la requête de téléchargement...');
-            const response = await fetch(`${API_BASE_URL}/download`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ url, requestId }),
-            });
-
-            console.log('Réponse reçue:', response.status, response.statusText);
-            const contentType = response.headers.get('content-type');
-            console.log('Content-Type:', contentType);
-
-            if (!response.ok) {
-                let errorMessage = 'Erreur lors de la conversion';
-                try {
-                    if (contentType && contentType.includes('application/json')) {
-                        const errorData = await response.json();
-                        console.error('Erreur de réponse:', errorData);
-                        errorMessage = errorData.error || errorMessage;
-                    } else {
-                        const textError = await response.text();
-                        console.error('Réponse non-JSON:', textError);
-                        errorMessage = 'Erreur inattendue du serveur';
-                    }
-                } catch (e) {
-                    console.error('Erreur lors de la lecture de la réponse:', e);
-                }
-                throw new Error(errorMessage);
-            }
-
-            if (!contentType || !contentType.includes('audio/mpeg')) {
-                console.error('Type de contenu invalide:', contentType);
-                throw new Error('Le serveur n\'a pas renvoyé un fichier audio valide');
-            }
-
-            const blob = await response.blob();
-            console.log('Blob reçu:', blob.type, blob.size);
-
-            if (blob.size === 0) {
-                throw new Error('Le fichier téléchargé est vide');
-            }
-
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = 'audio.mp3';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(downloadUrl);
-            document.body.removeChild(a);
-
-            showSuccess('Conversion réussie ! Votre fichier MP3 va être téléchargé.');
-            urlInput.value = '';
-        } catch (error) {
-            console.error('Erreur complète:', error);
-            showError(error.message || 'Une erreur est survenue lors de la conversion');
-        } finally {
-            if (eventSource) {
-                eventSource.close();
-                eventSource = null;
-            }
-            convertBtn.disabled = false;
-            loader.style.display = 'none';
-            setTimeout(resetProgress, 3000);
+    // Gestionnaire d'événements pour la touche Entrée dans le champ de recherche
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            performSearch();
         }
     });
 
-    // Permettre l'utilisation de la touche Entrée
-    urlInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !convertBtn.disabled) {
-            convertBtn.click();
-        }
+    // Gestionnaire pour le changement de langue
+    languageSelect.addEventListener('change', (e) => {
+        const language = e.target.value;
+        changeLanguage(language);
     });
+
+    // Fonction pour changer la langue
+    function changeLanguage(language) {
+        // Ici, vous pouvez ajouter la logique pour changer la langue
+        console.log('Changement de langue:', language);
+    }
+
+    // Système de notification
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+
+        // Supprimer les notifications existantes
+        const existingNotifications = document.querySelectorAll('.notification');
+        existingNotifications.forEach(notif => notif.remove());
+
+        // Ajouter la nouvelle notification
+        document.body.appendChild(notification);
+
+        // Supprimer la notification après 3 secondes
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    // Animation des cartes d'accès rapide
+    const quickAccessCards = document.querySelectorAll('.quick-access-card');
+    quickAccessCards.forEach(card => {
+        card.addEventListener('click', () => {
+            card.classList.add('card-clicked');
+            setTimeout(() => {
+                card.classList.remove('card-clicked');
+            }, 200);
+        });
+    });
+
+    // Gestion du menu mobile
+    const mobileMenuButton = document.createElement('button');
+    mobileMenuButton.className = 'mobile-menu-button';
+    mobileMenuButton.innerHTML = '<i class="fas fa-bars"></i>';
+    document.querySelector('.main-nav').prepend(mobileMenuButton);
+
+    mobileMenuButton.addEventListener('click', () => {
+        document.querySelector('.main-nav ul').classList.toggle('show');
+    });
+
+    // Gestion du scroll
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        const header = document.querySelector('.main-header');
+
+        if (currentScroll > lastScroll && currentScroll > 100) {
+            header.classList.add('header-hidden');
+        } else {
+            header.classList.remove('header-hidden');
+        }
+        lastScroll = currentScroll;
+    });
+
+    // Lazy loading des images
+    const images = document.querySelectorAll('img[data-src]');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+                observer.unobserve(img);
+            }
+        });
+    });
+
+    images.forEach(img => imageObserver.observe(img));
+
+    // Animations au scroll
+    const animatedElements = document.querySelectorAll('.animate-on-scroll');
+    const elementObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animated');
+            }
+        });
+    });
+
+    animatedElements.forEach(element => elementObserver.observe(element));
+
+    // Gestion du mode sombre
+    const darkModeToggle = document.createElement('button');
+    darkModeToggle.className = 'dark-mode-toggle';
+    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+    document.querySelector('.header-actions').prepend(darkModeToggle);
+
+    darkModeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        darkModeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        localStorage.setItem('darkMode', isDarkMode);
+    });
+
+    // Vérifier la préférence de mode sombre
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
 });

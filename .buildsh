@@ -1,37 +1,20 @@
 #!/bin/bash
 
-# Installer les dépendances système avec sudo
-sudo apt-get update
-sudo apt-get install -y ffmpeg python3-pip
-
 # Installer les dépendances Python
 python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 
 # Créer les dossiers nécessaires
 mkdir -p www/static
-mkdir -p tmp
+mkdir -p storage
 
-# Donner les permissions nécessaires avec sudo
-sudo chmod -R 755 www
-sudo chmod -R 777 tmp
-sudo chown -R $USER:$USER www tmp
+# Donner les permissions nécessaires
+chmod -R 755 www
+chmod -R 777 storage
 
 # Copier les fichiers statiques
 cp -r static/* www/static/
 cp static/index.html www/
-
-# Vérifier l'installation de FFmpeg
-ffmpeg -version
-
-# Afficher la structure des dossiers pour le débogage
-echo "Structure des dossiers :"
-ls -R
-
-# Vérifier les permissions
-echo "Permissions des dossiers :"
-ls -la www/
-ls -la tmp/
 
 # Vérifier l'environnement
 echo "Environnement Python :"
@@ -40,7 +23,11 @@ python3 --version
 which pip
 pip --version
 
-# Vérifier les processus
-echo "Processus en cours :"
-ps aux | grep python
-ps aux | grep gunicorn
+# Vérifier la structure des dossiers
+echo "Structure des dossiers :"
+ls -R
+
+# Vérifier les permissions
+echo "Permissions des dossiers :"
+ls -la www/
+ls -la storage/

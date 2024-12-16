@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: youtube-mp3-converter
+    name: bibliotheque-fegbm
     env: python
     buildCommand: bash .buildsh
     startCommand: gunicorn wsgi:app --log-file -
@@ -10,6 +10,11 @@ services:
       - key: PATH
         value: /usr/local/bin:/usr/bin:/bin
     disk:
-      name: tmp
-      mountPath: /tmp
-      sizeGB: 1 
+      name: storage
+      mountPath: /opt/render/project/src/storage
+      sizeGB: 1
+    staticPublishPath: ./www
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
