@@ -1,6 +1,6 @@
 Flask==2.3.3
-yt-dlp==2023.12.30
+yt-dlp>=2024.3.10
 flask-cors==4.0.0
 gunicorn==21.2.0
 ffmpeg-python==0.2.0
-browser-cookie3==0.19.1
+requests>=2.31.0

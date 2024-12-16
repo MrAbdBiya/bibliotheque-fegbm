@@ -195,7 +195,7 @@ def download_video():
             output_template = os.path.join(temp_dir, f'yt_{request_id}_%(title)s.%(ext)s')
 
             ydl_opts = {
-                'format': 'bestaudio[ext=m4a]/bestaudio/best',
+                'format': 'bestaudio/best',
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
@@ -205,33 +205,53 @@ def download_video():
                 'quiet': False,
                 'no_warnings': True,
                 'progress_hooks': [progress_hook],
-                # Options pour contourner les restrictions
-                'extractor_retries': 3,
-                'fragment_retries': 3,
-                'skip_download_archive': True,
-                'rm_cachedir': True,
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['android'],
-                        'player_skip': ['webpage', 'configs', 'js'],
-                        'max_comments': [0],
-                    }
-                },
+                'no_check_certificates': True,
+                'ignoreerrors': True,
+                'nocheckcertificate': True,
+                'extract_flat': False,
+                'youtube_include_dash_manifest': False,
                 'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                    'Accept-Language': 'en-US,en;q=0.5',
-                    'DNT': '1',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-us,en;q=0.5',
+                    'Sec-Fetch-Mode': 'navigate',
                 }
             }
 
             logger.info(f"Début du téléchargement avec yt-dlp pour {request_id}")
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                title = info['title']
-                output_path = os.path.join(temp_dir, f'yt_{request_id}_{title}.mp3')
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    # Mettre à jour yt-dlp
+                    try:
+                        ydl.download(['-U'])
+                    except:
+                        logger.warning("Impossible de mettre à jour yt-dlp")
 
-                logger.info(f"Téléchargement terminé pour {request_id}: {output_path}")
+                    # Extraire les informations d'abord
+                    logger.info("Extraction des informations de la vidéo...")
+                    info = ydl.extract_info(url, download=False)
+                    if info is None:
+                        raise Exception("Impossible d'extraire les informations de la vidéo")
+
+                    title = info.get('title', 'video')
+                    logger.info(f"Titre de la vidéo : {title}")
+
+                    # Télécharger la vidéo
+                    logger.info("Début du téléchargement...")
+                    ydl.download([url])
+
+                    output_path = os.path.join(temp_dir, f'yt_{request_id}_{title}.mp3')
+                    logger.info(f"Chemin de sortie attendu : {output_path}")
+
+                    if not os.path.exists(output_path):
+                        possible_files = os.listdir(temp_dir)
+                        logger.info(f"Fichiers dans le dossier temp : {possible_files}")
+                        matching_files = [f for f in possible_files if f.startswith(f'yt_{request_id}_') and f.endswith('.mp3')]
+                        if matching_files:
+                            output_path = os.path.join(temp_dir, matching_files[0])
+                            logger.info(f"Fichier trouvé : {output_path}")
+                        else:
+                            raise Exception("Le fichier MP3 n'a pas été créé")
 
                 # Informer que le traitement est terminé
                 send_progress_update(request_id, {
@@ -254,6 +274,15 @@ def download_video():
 
                 response.headers['Connection'] = 'close'
                 return response
+
+            except Exception as e:
+                error_message = str(e)
+                logger.error(f"Erreur lors du téléchargement pour {request_id}: {error_message}")
+                send_progress_update(request_id, {
+                    'status': 'error',
+                    'message': error_message
+                })
+                return jsonify({'error': f"Erreur lors du téléchargement: {error_message}"}), 500
 
         except Exception as e:
             error_message = str(e)
