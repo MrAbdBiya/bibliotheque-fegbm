@@ -205,6 +205,11 @@ def download_video():
                 'quiet': False,
                 'no_warnings': True,
                 'progress_hooks': [progress_hook],
+                'cookiesfrombrowser': ('chrome',),
+                'extractor_args': {'youtube': {'player_client': ['android']}},
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
             }
 
             logger.info(f"Début du téléchargement avec yt-dlp pour {request_id}")
