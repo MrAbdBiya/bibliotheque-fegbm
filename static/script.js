@@ -1,5 +1,5 @@
 // Configuration de l'API
-const API_BASE_URL = 'https://youtube-mp3-converter-xxxx.onrender.com'; // Remplacez par votre URL Render
+const API_BASE_URL = 'https://youtube-mp3-converter-b3jh.onrender.com'; // URL du serveur Render
 
 // Fonction pour vérifier la connexion au serveur
 async function checkServerConnection() {

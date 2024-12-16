@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, Response
+from flask import Flask, request, jsonify, send_file, Response, send_from_directory
 from flask_cors import CORS
 import yt_dlp
 import os
@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 import io
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app, resources={
     r"/*": {
         "origins": "*",
@@ -27,6 +27,11 @@ logger = logging.getLogger(__name__)
 progress_queues = {}
 download_timestamps = {}
 thread_to_request_id = {}
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                             'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 def send_progress_update(request_id, progress_data):
     """Fonction utilitaire pour envoyer les mises à jour de progression"""
