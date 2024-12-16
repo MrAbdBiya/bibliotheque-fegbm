@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue - FEGBM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <img src="static/images/logo-fegbm.png" alt="FEGBM Logo">
+                    <div class="logo-text">
+                        <h1>FEGBM</h1>
+                        <p>Faculté d'Économie et de Gestion</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <a href="#" class="btn-login">
+                        <i class="fas fa-user"></i>
+                        Connexion
+                    </a>
+                    <select class="language-select">
+                        <option value="fr">Français</option>
+                        <option value="ar">العربية</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container">
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="catalogue.html" class="active">Catalogue</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="ressources.html">Ressources</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>Catalogue de la Bibliothèque</h1>
+                <div class="search-box">
+                    <div class="search-form">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Rechercher par titre, auteur, ISBN...">
+                        </div>
+                        <div class="search-filters">
+                            <select>
+                                <option value="all">Tous les documents</option>
+                                <option value="books">Livres</option>
+                                <option value="articles">Articles</option>
+                                <option value="theses">Thèses</option>
+                            </select>
+                            <button class="btn-search">Rechercher</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="catalogue-content">
+            <div class="container">
+                <div class="filters-sidebar">
+                    <h3>Filtres</h3>
+                    <div class="filter-group">
+                        <h4>Catégories</h4>
+                        <ul>
+                            <li><label><input type="checkbox"> Économie (150)</label></li>
+                            <li><label><input type="checkbox"> Gestion (200)</label></li>
+                            <li><label><input type="checkbox"> Finance (120)</label></li>
+                            <li><label><input type="checkbox"> Marketing (80)</label></li>
+                            <li><label><input type="checkbox"> Comptabilité (90)</label></li>
+                        </ul>
+                    </div>
+                    <div class="filter-group">
+                        <h4>Année de publication</h4>
+                        <ul>
+                            <li><label><input type="checkbox"> 2020-2024 (300)</label></li>
+                            <li><label><input type="checkbox"> 2015-2019 (250)</label></li>
+                            <li><label><input type="checkbox"> 2010-2014 (180)</label></li>
+                            <li><label><input type="checkbox"> Avant 2010 (270)</label></li>
+                        </ul>
+                    </div>
+                    <div class="filter-group">
+                        <h4>Langue</h4>
+                        <ul>
+                            <li><label><input type="checkbox"> Français (500)</label></li>
+                            <li><label><input type="checkbox"> Anglais (300)</label></li>
+                            <li><label><input type="checkbox"> Arabe (200)</label></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="catalogue-results">
+                    <div class="results-header">
+                        <p>1000 résultats trouvés</p>
+                        <select class="sort-select">
+                            <option value="relevance">Pertinence</option>
+                            <option value="date-desc">Date (Plus récent)</option>
+                            <option value="date-asc">Date (Plus ancien)</option>
+                            <option value="title">Titre (A-Z)</option>
+                        </select>
+                    </div>
+
+                    <div class="book-grid">
+                        <div class="book-card">
+                            <img src="static/images/book1.jpg" alt="Livre d'économie">
+                            <div class="book-info">
+                                <h3>Principes d'économie moderne</h3>
+                                <p class="author">Par Joseph E. Stiglitz</p>
+                                <p class="details">2022 | Français | 520 pages</p>
+                                <div class="availability available">
+                                    <i class="fas fa-check-circle"></i> Disponible
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="book-card">
+                            <img src="static/images/book2.jpg" alt="Livre de gestion">
+                            <div class="book-info">
+                                <h3>Management stratégique</h3>
+                                <p class="author">Par Michel Porter</p>
+                                <p class="details">2021 | Français | 450 pages</p>
+                                <div class="availability unavailable">
+                                    <i class="fas fa-times-circle"></i> Emprunté
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Répéter pour plus de livres -->
+                    </div>
+
+                    <div class="pagination">
+                        <a href="#" class="active">1</a>
+                        <a href="#">2</a>
+                        <a href="#">3</a>
+                        <a href="#">4</a>
+                        <a href="#">5</a>
+                        <a href="#" class="next">Suivant <i class="fas fa-chevron-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> Adresse de la faculté</p>
+                    <p><i class="fas fa-phone"></i> +212 5XX XX XX XX</p>
+                    <p><i class="fas fa-envelope"></i> contact@fegbm.ma</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Liens utiles</h3>
+                    <ul>
+                        <li><a href="#">Guide de l'utilisateur</a></li>
+                        <li><a href="#">Règlement intérieur</a></li>
+                        <li><a href="#">Plan du site</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Horaires d'ouverture</h3>
+                    <p>Lundi - Vendredi : 8h30 - 18h00</p>
+                    <p>Samedi : 9h00 - 13h00</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Suivez-nous</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 FEGBM. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="static/script.js"></script>
+</body>
+</html> 
