@@ -213,8 +213,14 @@ def download_video():
                 'no_check_certificates': True,
                 'ignoreerrors': True,
                 'nocheckcertificate': True,
-                'extract_flat': False,
+                'extract_flat': True,
                 'youtube_include_dash_manifest': False,
+                'extractor_args': {
+                    'youtube': {
+                        'skip': ['dash', 'hls'],
+                        'player_skip': ['js', 'configs', 'webpage'],
+                    }
+                },
                 'http_headers': {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -223,6 +229,7 @@ def download_video():
                 },
                 'socket_timeout': 30,
                 'retries': 3,
+                'verbose': True,
             }
 
             logger.info(f"Début du téléchargement avec yt-dlp pour {request_id}")
@@ -231,9 +238,17 @@ def download_video():
                     # Extraire les informations d'abord
                     logger.info("Extraction des informations de la vidéo...")
                     try:
+                        # Essayer d'abord avec extract_info
                         info = ydl.extract_info(url, download=False)
                         if info is None:
-                            raise Exception("Impossible d'extraire les informations de la vidéo")
+                            # Si ça échoue, essayer avec une autre méthode
+                            logger.info("Tentative avec une autre méthode d'extraction...")
+                            ydl_opts['extract_flat'] = False
+                            ydl_opts['format'] = 'bestaudio'
+                            with yt_dlp.YoutubeDL(ydl_opts) as ydl2:
+                                info = ydl2.extract_info(url, download=False)
+                                if info is None:
+                                    raise Exception("Impossible d'extraire les informations de la vidéo")
                         
                         logger.info(f"Informations extraites : {json.dumps(info, indent=2)}")
                     except Exception as e:
@@ -243,10 +258,13 @@ def download_video():
                     title = info.get('title', 'video')
                     logger.info(f"Titre de la vidéo : {title}")
 
-                    # Télécharger la vidéo
+                    # Télécharger la vidéo avec les options de base
                     logger.info("Début du téléchargement...")
                     try:
-                        ydl.download([url])
+                        ydl_opts['extract_flat'] = False
+                        ydl_opts['format'] = 'bestaudio'
+                        with yt_dlp.YoutubeDL(ydl_opts) as ydl3:
+                            ydl3.download([url])
                     except Exception as e:
                         logger.error(f"Erreur lors du téléchargement : {str(e)}")
                         raise Exception(f"Erreur lors du téléchargement : {str(e)}")
