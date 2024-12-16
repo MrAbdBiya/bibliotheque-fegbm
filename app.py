@@ -208,24 +208,48 @@ def download_video():
                 }],
                 'outtmpl': output_template,
                 'quiet': False,
-                'no_warnings': False,  # Activer les avertissements pour le débogage
+                'no_warnings': False,
                 'progress_hooks': [progress_hook],
                 'verbose': True,
                 'no_color': True,
                 'geo_bypass': True,
                 'nocheckcertificate': True,
-                'ignoreerrors': False,  # Ne pas ignorer les erreurs pour voir ce qui se passe
+                'ignoreerrors': False,
                 'extract_flat': False,
                 'youtube_include_dash_manifest': False,
+                'cookiesfrombrowser': ('chrome',),
+                'extractor_args': {
+                    'youtube': {
+                        'player_skip': ['js', 'webpage', 'configs'],
+                        'skip': ['hls', 'dash', 'translated_subs'],
+                    }
+                },
                 'http_headers': {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                     'Accept-Language': 'en-us,en;q=0.5',
                     'Sec-Fetch-Mode': 'navigate',
+                    'Origin': 'https://www.youtube.com',
+                    'Referer': 'https://www.youtube.com/',
                 },
                 'socket_timeout': 30,
                 'retries': 3,
             }
+
+            # Créer un fichier de cookies temporaire
+            cookies_path = os.path.join(TEMP_FOLDER, f'cookies_{request_id}.txt')
+            try:
+                # Essayer d'exporter les cookies de Chrome
+                import browser_cookie3
+                cj = browser_cookie3.chrome(domain_name='.youtube.com')
+                with open(cookies_path, 'w') as f:
+                    for cookie in cj:
+                        f.write(f'{cookie.domain}\tTRUE\t{cookie.path}\t'
+                               f'{"TRUE" if cookie.secure else "FALSE"}\t{cookie.expires}\t'
+                               f'{cookie.name}\t{cookie.value}\n')
+                ydl_opts['cookiefile'] = cookies_path
+            except Exception as e:
+                logger.warning(f"Impossible d'exporter les cookies : {e}")
 
             logger.info(f"Début du téléchargement avec yt-dlp pour {request_id}")
             try:
@@ -277,6 +301,15 @@ def download_video():
                     except Exception as e:
                         logger.error(f"Erreur inattendue : {str(e)}")
                         raise
+
+                    finally:
+                        # Supprimer le fichier de cookies
+                        if os.path.exists(cookies_path):
+                            try:
+                                os.remove(cookies_path)
+                                logger.info("Fichier de cookies supprimé")
+                            except Exception as e:
+                                logger.warning(f"Impossible de supprimer le fichier de cookies : {e}")
 
                     # Informer que le traitement est terminé
                     send_progress_update(request_id, {
