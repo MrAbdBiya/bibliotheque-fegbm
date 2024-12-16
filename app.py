@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, Response, send_from_directory
+from flask import Flask, request, jsonify, send_file, Response, send_from_directory, render_template
 from flask_cors import CORS
 import yt_dlp
 import os
@@ -11,7 +11,11 @@ import time
 from datetime import datetime
 import io
 
-app = Flask(__name__, static_url_path='/static', static_folder='static')
+app = Flask(__name__, 
+            static_url_path='',
+            static_folder='www',
+            template_folder='www')
+
 CORS(app, resources={
     r"/*": {
         "origins": "*",
@@ -20,7 +24,11 @@ CORS(app, resources={
     }
 })
 
-logging.basicConfig(level=logging.DEBUG)
+# Configuration du logging plus détaillée
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Dictionnaire pour stocker les files de progression et les timestamps
@@ -85,7 +93,12 @@ def progress_hook(d):
 
 @app.route('/')
 def home():
-    return app.send_static_file('index.html')
+    logger.info("Accès à la page d'accueil")
+    try:
+        return app.send_static_file('index.html')
+    except Exception as e:
+        logger.error(f"Erreur lors de l'envoi de index.html: {e}")
+        return "Erreur lors du chargement de la page", 500
 
 @app.route('/progress/<request_id>')
 def get_progress(request_id):
@@ -138,15 +151,21 @@ def download_video():
     
     try:
         data = request.get_json()
+        if not data:
+            logger.error("Pas de données JSON reçues")
+            return jsonify({'error': 'Données JSON requises'}), 400
+
         url = data.get('url')
         request_id = data.get('requestId')
 
-        if not url:
-            return jsonify({'error': 'URL is required'}), 400
-        if not request_id:
-            return jsonify({'error': 'requestId is required'}), 400
+        logger.info(f"Nouvelle demande de téléchargement - URL: {url}, RequestID: {request_id}")
 
-        logger.info(f"Tentative de téléchargement pour l'URL: {url} (requestId: {request_id})")
+        if not url:
+            logger.error("URL manquante dans la requête")
+            return jsonify({'error': 'URL requise'}), 400
+        if not request_id:
+            logger.error("RequestID manquant dans la requête")
+            return jsonify({'error': 'RequestID requis'}), 400
 
         # Associer le thread actuel au request_id
         thread_to_request_id[thread_id] = request_id
@@ -173,12 +192,10 @@ def download_video():
                 'quiet': False,
                 'no_warnings': True,
                 'progress_hooks': [progress_hook],
-                'concurrent_fragment_downloads': 3,
-                'buffersize': 1024 * 16,
             }
 
+            logger.info(f"Début du téléchargement avec yt-dlp pour {request_id}")
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                logger.info(f"Début du téléchargement pour {request_id}...")
                 info = ydl.extract_info(url, download=True)
                 title = info['title']
                 output_path = os.path.join(temp_dir, f'yt_{request_id}_{title}.mp3')
@@ -192,9 +209,6 @@ def download_video():
                     'message': 'Téléchargement terminé !'
                 })
 
-                # Petit délai pour s'assurer que le dernier message est envoyé
-                time.sleep(0.5)
-
                 # Lire le fichier en mémoire avant de l'envoyer
                 with open(output_path, 'rb') as file:
                     file_data = file.read()
@@ -207,7 +221,6 @@ def download_video():
                     mimetype="audio/mpeg"
                 )
 
-                # Ajouter un en-tête pour indiquer que le fichier peut être supprimé
                 response.headers['Connection'] = 'close'
                 return response
 
@@ -220,27 +233,27 @@ def download_video():
             })
             return jsonify({'error': f"Erreur lors du téléchargement: {error_message}"}), 500
 
-        finally:
-            # Nettoyer l'association thread-requestId
-            if thread_id in thread_to_request_id:
-                del thread_to_request_id[thread_id]
-
-            # Essayer de supprimer le fichier temporaire après un court délai
-            def delete_temp_file(file_path):
-                try:
-                    time.sleep(2)  # Attendre 2 secondes
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
-                        logger.info(f"Fichier temporaire supprimé: {file_path}")
-                except Exception as e:
-                    logger.warning(f"Impossible de supprimer le fichier temporaire {file_path}: {e}")
-
-            if output_path:
-                threading.Thread(target=delete_temp_file, args=(output_path,)).start()
-
     except Exception as e:
         logger.error(f"Erreur générale: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+    finally:
+        # Nettoyer l'association thread-requestId
+        if thread_id in thread_to_request_id:
+            del thread_to_request_id[thread_id]
+
+        # Essayer de supprimer le fichier temporaire après un court délai
+        def delete_temp_file(file_path):
+            try:
+                time.sleep(2)  # Attendre 2 secondes
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    logger.info(f"Fichier temporaire supprimé: {file_path}")
+            except Exception as e:
+                logger.warning(f"Impossible de supprimer le fichier temporaire {file_path}: {e}")
+
+        if output_path:
+            threading.Thread(target=delete_temp_file, args=(output_path,)).start()
 
 @app.route('/health')
 def health_check():

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Installer les dépendances Python
+pip install -r requirements.txt
+
+# Créer le dossier www s'il n'existe pas
+mkdir -p www/static
+
+# Copier les fichiers statiques
+cp -r static/* www/static/
+cp static/index.html www/ 

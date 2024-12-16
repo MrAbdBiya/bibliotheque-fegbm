@@ -4,11 +4,13 @@ const API_BASE_URL = 'https://youtube-mp3-converter-b3jh.onrender.com'; // URL d
 // Fonction pour vérifier la connexion au serveur
 async function checkServerConnection() {
     try {
+        console.log('Vérification de la connexion au serveur...');
         const response = await fetch(`${API_BASE_URL}/health`);
         if (!response.ok) {
+            console.error('Erreur de connexion au serveur:', response.status, response.statusText);
             throw new Error('Serveur non disponible');
         }
-        console.log('Connexion au serveur établie');
+        console.log('Connexion au serveur établie avec succès');
         return true;
     } catch (error) {
         console.error('Erreur de connexion au serveur:', error);
@@ -227,6 +229,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        console.log('Début de la conversion pour:', url);
+
         // Vérifier la connexion avant de commencer
         const isConnected = await checkServerConnection();
         if (!isConnected) {
@@ -242,14 +246,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             progressContainer.style.display = 'block';
             
             const requestId = Date.now().toString();
+            console.log('RequestID généré:', requestId);
             
             // Établir la connexion SSE d'abord
+            console.log('Établissement de la connexion SSE...');
             const progressPromise = setupEventSource(requestId);
             
             // Attendre que la connexion SSE soit établie
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Démarrer le téléchargement
+            console.log('Envoi de la requête de téléchargement...');
             const response = await fetch(`${API_BASE_URL}/download`, {
                 method: 'POST',
                 headers: {
@@ -258,12 +265,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify({ url, requestId }),
             });
 
+            console.log('Réponse reçue:', response.status, response.statusText);
+
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('Erreur de réponse:', errorData);
                 throw new Error(errorData.error || 'Erreur lors de la conversion');
             }
 
             const blob = await response.blob();
+            console.log('Blob reçu:', blob.type, blob.size);
+
             const downloadUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = downloadUrl;
@@ -276,8 +288,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             showSuccess('Conversion réussie ! Votre fichier MP3 va être téléchargé.');
             urlInput.value = '';
         } catch (error) {
-            showError(error.message);
-            console.error('Erreur détaillée:', error);
+            console.error('Erreur complète:', error);
+            showError(error.message || 'Une erreur est survenue lors de la conversion');
         } finally {
             if (eventSource) {
                 eventSource.close();
