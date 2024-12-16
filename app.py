@@ -205,10 +205,23 @@ def download_video():
                 'quiet': False,
                 'no_warnings': True,
                 'progress_hooks': [progress_hook],
-                'cookiesfrombrowser': ('chrome',),
-                'extractor_args': {'youtube': {'player_client': ['android']}},
+                # Options pour contourner les restrictions
+                'extractor_retries': 3,
+                'fragment_retries': 3,
+                'skip_download_archive': True,
+                'rm_cachedir': True,
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['android'],
+                        'player_skip': ['webpage', 'configs', 'js'],
+                        'max_comments': [0],
+                    }
+                },
                 'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                    'DNT': '1',
                 }
             }
 
