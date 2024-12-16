@@ -215,30 +215,36 @@ def download_video():
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                     'Accept-Language': 'en-us,en;q=0.5',
                     'Sec-Fetch-Mode': 'navigate',
-                }
+                },
+                'socket_timeout': 30,
+                'retries': 3,
             }
 
             logger.info(f"Début du téléchargement avec yt-dlp pour {request_id}")
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    # Mettre à jour yt-dlp
-                    try:
-                        ydl.download(['-U'])
-                    except:
-                        logger.warning("Impossible de mettre à jour yt-dlp")
-
                     # Extraire les informations d'abord
                     logger.info("Extraction des informations de la vidéo...")
-                    info = ydl.extract_info(url, download=False)
-                    if info is None:
-                        raise Exception("Impossible d'extraire les informations de la vidéo")
+                    try:
+                        info = ydl.extract_info(url, download=False)
+                        if info is None:
+                            raise Exception("Impossible d'extraire les informations de la vidéo")
+                        
+                        logger.info(f"Informations extraites : {json.dumps(info, indent=2)}")
+                    except Exception as e:
+                        logger.error(f"Erreur lors de l'extraction des informations : {str(e)}")
+                        raise Exception(f"Erreur lors de l'extraction des informations : {str(e)}")
 
                     title = info.get('title', 'video')
                     logger.info(f"Titre de la vidéo : {title}")
 
                     # Télécharger la vidéo
                     logger.info("Début du téléchargement...")
-                    ydl.download([url])
+                    try:
+                        ydl.download([url])
+                    except Exception as e:
+                        logger.error(f"Erreur lors du téléchargement : {str(e)}")
+                        raise Exception(f"Erreur lors du téléchargement : {str(e)}")
 
                     output_path = os.path.join(temp_dir, f'yt_{request_id}_{title}.mp3')
                     logger.info(f"Chemin de sortie attendu : {output_path}")
@@ -253,27 +259,34 @@ def download_video():
                         else:
                             raise Exception("Le fichier MP3 n'a pas été créé")
 
-                # Informer que le traitement est terminé
-                send_progress_update(request_id, {
-                    'progress': 100,
-                    'status': 'finished',
-                    'message': 'Téléchargement terminé !'
-                })
+                    # Informer que le traitement est terminé
+                    send_progress_update(request_id, {
+                        'progress': 100,
+                        'status': 'finished',
+                        'message': 'Téléchargement terminé !'
+                    })
 
-                # Lire le fichier en mémoire avant de l'envoyer
-                with open(output_path, 'rb') as file:
-                    file_data = file.read()
+                    # Lire le fichier en mémoire avant de l'envoyer
+                    try:
+                        with open(output_path, 'rb') as file:
+                            file_data = file.read()
+                    except Exception as e:
+                        logger.error(f"Erreur lors de la lecture du fichier : {str(e)}")
+                        raise Exception(f"Erreur lors de la lecture du fichier : {str(e)}")
 
-                # Créer la réponse avec les données du fichier
-                response = send_file(
-                    io.BytesIO(file_data),
-                    as_attachment=True,
-                    download_name=f"{title}.mp3",
-                    mimetype="audio/mpeg"
-                )
-
-                response.headers['Connection'] = 'close'
-                return response
+                    # Créer la réponse avec les données du fichier
+                    try:
+                        response = send_file(
+                            io.BytesIO(file_data),
+                            as_attachment=True,
+                            download_name=f"{title}.mp3",
+                            mimetype="audio/mpeg"
+                        )
+                        response.headers['Connection'] = 'close'
+                        return response
+                    except Exception as e:
+                        logger.error(f"Erreur lors de l'envoi du fichier : {str(e)}")
+                        raise Exception(f"Erreur lors de l'envoi du fichier : {str(e)}")
 
             except Exception as e:
                 error_message = str(e)
@@ -282,7 +295,7 @@ def download_video():
                     'status': 'error',
                     'message': error_message
                 })
-                return jsonify({'error': f"Erreur lors du téléchargement: {error_message}"}), 500
+                return jsonify({'error': error_message}), 500
 
         except Exception as e:
             error_message = str(e)
@@ -291,11 +304,12 @@ def download_video():
                 'status': 'error',
                 'message': error_message
             })
-            return jsonify({'error': f"Erreur lors du téléchargement: {error_message}"}), 500
+            return jsonify({'error': error_message}), 500
 
     except Exception as e:
-        logger.error(f"Erreur générale: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        error_message = str(e)
+        logger.error(f"Erreur générale: {error_message}")
+        return jsonify({'error': error_message}), 500
 
     finally:
         # Nettoyer l'association thread-requestId

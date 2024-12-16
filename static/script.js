@@ -261,20 +261,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                 },
                 body: JSON.stringify({ url, requestId }),
             });
 
             console.log('Réponse reçue:', response.status, response.statusText);
+            const contentType = response.headers.get('content-type');
+            console.log('Content-Type:', contentType);
 
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Erreur de réponse:', errorData);
-                throw new Error(errorData.error || 'Erreur lors de la conversion');
+                let errorMessage = 'Erreur lors de la conversion';
+                try {
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        console.error('Erreur de réponse:', errorData);
+                        errorMessage = errorData.error || errorMessage;
+                    } else {
+                        const textError = await response.text();
+                        console.error('Réponse non-JSON:', textError);
+                        errorMessage = 'Erreur inattendue du serveur';
+                    }
+                } catch (e) {
+                    console.error('Erreur lors de la lecture de la réponse:', e);
+                }
+                throw new Error(errorMessage);
+            }
+
+            if (!contentType || !contentType.includes('audio/mpeg')) {
+                console.error('Type de contenu invalide:', contentType);
+                throw new Error('Le serveur n\'a pas renvoyé un fichier audio valide');
             }
 
             const blob = await response.blob();
             console.log('Blob reçu:', blob.type, blob.size);
+
+            if (blob.size === 0) {
+                throw new Error('Le fichier téléchargé est vide');
+            }
 
             const downloadUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
